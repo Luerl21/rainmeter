@@ -30,25 +30,27 @@ async def main():
                 if str(service.uuid) == BATTERY_SERVICE_UUID:
                     characteristics_result = await service.get_characteristics_async()
                     characteristics = characteristics_result.characteristics
-
                     for characteristic in characteristics:
                         if str(characteristic.uuid) == BATTERY_LEVEL_CHARACTERISTIC_UUID:
                             read_result = await characteristic.read_value_async()
                             if read_result.status == GattCommunicationStatus.SUCCESS:
                                 reader = DataReader.from_buffer(read_result.value)
                                 battery_level = reader.read_byte()
+                                process_battery_level(characteristic, battery_level)
 
-                                device_type = "Неизвестное устройство"
-                                if characteristic.attribute_handle == MAIN_DEVICE_HANDLE:
-                                    device_type = "Главное устройство"
-                                    with open("C:\\Users\\Luerl\\Documents\\Rainmeter\\Skins\\ZMK\\@Resources\\battery_level_main.txt", "w") as file:
-                                        file.write(str(battery_level))
-                                elif characteristic.attribute_handle == PERIPHERAL_DEVICE_HANDLE:
-                                    device_type = "Зависимое устройство"
-                                    with open("C:\\Users\\Luerl\\Documents\\Rainmeter\\Skins\\ZMK\\@Resources\\battery_level_peripheral.txt", "w") as file:
-                                        file.write(str(battery_level))
-
-                                print(f"{device_type} Battery Level: {battery_level}%")
             time.sleep(5)
+
+def process_battery_level(characteristic, battery_level):
+    device_type = "Неизвестное устройство"
+    if characteristic.attribute_handle == MAIN_DEVICE_HANDLE:
+        device_type = "Главное устройство"
+        file_path = "C:\\Users\\Luerl\\Documents\\Rainmeter\\Skins\\ZMK\\@Resources\\battery_level_main.txt"
+    elif characteristic.attribute_handle == PERIPHERAL_DEVICE_HANDLE:
+        device_type = "Зависимое устройство"
+        file_path = "C:\\Users\\Luerl\\Documents\\Rainmeter\\Skins\\ZMK\\@Resources\\battery_level_peripheral.txt"
+
+    with open(file_path, "w") as file:
+        file.write(str(battery_level))
+    print(f"{device_type} Battery Level: {battery_level}%")
 
 asyncio.run(main())
